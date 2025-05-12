@@ -1,0 +1,60 @@
+<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient -->
+    <linearGradient id="gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f9a8d4" />
+      <stop offset="100%" stop-color="#f472b6" />
+    </linearGradient>
+
+    <!-- Grid pattern -->
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M60 0L0 0 0 60" fill="none" stroke="#fce7f3" stroke-width="0.5"/>
+    </pattern>
+
+    <!-- CSS animation for pulse and float -->
+    <style>
+      .pulse {
+        stroke-dasharray: 5;
+        stroke-dashoffset: 100;
+        animation: dashmove 4s linear infinite;
+      }
+
+      .float {
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .rotate {
+        animation: rotate 20s linear infinite;
+        transform-origin: center;
+      }
+
+      @keyframes dashmove {
+        to { stroke-dashoffset: 0; }
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+
+      @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="url(#gradient)" />
+  <rect width="100%" height="100%" fill="url(#grid)" opacity="0.1" />
+
+  <!-- Circuit paths -->
+  <path d="M100 150 L300 150 L300 200" class="pulse" stroke="#fdf4ff" stroke-width="1" fill="none" opacity="0.3"/>
+  <path d="M500 80 Q600 140 700 80" class="pulse" stroke="#fce7f3" stroke-width="1" fill="none" opacity="0.25"/>
+
+  <!-- Math symbols -->
+  <text x="100" y="100" font-size="32" fill="#fff" opacity="0.2" class="float">√</text>
+  <text x="600" y="200" font-size="38" fill="#fff" opacity="0.15" class="rotate">∑</text>
+  <text x="400" y="350" font-size="30" fill="#fff" opacity="0.18" class="float">∞</text>
+  <text x="700" y="450" font-size="26" fill="#fff" opacity="0.12" class="rotate">π</text>
+</svg>

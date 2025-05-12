@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  @apply min-h-screen font-sans text-black;
+
+  background-color: #ffe4e6;
+  background-image:
+    url('/assets/bg-custom1.svg'),
+    radial-gradient(circle, rgba(255,192,203,0.2) 0%, transparent 60%);
+  background-repeat: no-repeat, repeat;
+  background-position: center center, top left;
+  background-size: cover, auto;
+  background-attachment: fixed;
+  background-blend-mode: multiply;
+}
