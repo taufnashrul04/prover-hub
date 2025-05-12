@@ -1,7 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/tweet/page": "app/tweet/page.js",
-  "/learn/page": "app/learn/page.js",
-  "/meme/page": "app/meme/page.js",
-  "/quiz/[topic]/page": "app/quiz/[topic]/page.js"
-}
