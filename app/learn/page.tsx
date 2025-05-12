@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import LearnSection from '../../components/LearnSection'
 import QuizSection from '../../components/QuizSection'
 import { motion, useScroll, useTransform } from 'framer-motion'
@@ -17,30 +18,44 @@ export default function LearnPage() {
       <LearnSection />
       <QuizSection />
 
-      <motion.img
-        src="/assets/sticker-left.svg"
-        alt="Sticker Left"
-        className="absolute bottom-0 left-0 w-32 opacity-70 pointer-events-none"
+      <motion.div
         style={{ y: leftY }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 0.7, y: 0 }}
         transition={{ delay: 0.5, duration: 0.8 }}
-      />
-      <motion.img
-        src="/assets/sticker-right.svg"
-        alt="Sticker Right"
-        className="absolute bottom-0 right-0 w-32 opacity-70 pointer-events-none"
+        className="absolute bottom-0 left-0 w-32 opacity-70 pointer-events-none"
+      >
+        <Image
+          src="/assets/sticker-left.svg"
+          alt="Sticker Left"
+          width={128}
+          height={128}
+          className="w-full h-auto"
+        />
+      </motion.div>
+
+      <motion.div
         style={{ y: rightY }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 0.7, y: 0 }}
         transition={{ delay: 0.8, duration: 0.8 }}
-      />
+        className="absolute bottom-0 right-0 w-32 opacity-70 pointer-events-none"
+      >
+        <Image
+          src="/assets/sticker-right.svg"
+          alt="Sticker Right"
+          width={128}
+          height={128}
+          className="w-full h-auto"
+        />
+      </motion.div>
+
       <Link
-  href="/"
-  className="mt-12 text-sm text-blue-600 underline text-center block hover:text-blue-800 transition"
->
-  ← Back to Home
-</Link>
+        href="/"
+        className="mt-12 text-sm text-blue-600 underline text-center block hover:text-blue-800 transition"
+      >
+        ← Back to Home
+      </Link>
     </main>
   )
 }
