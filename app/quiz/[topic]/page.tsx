@@ -2,9 +2,13 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { quizData } from '@/lib/quizData'
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useState, ButtonHTMLAttributes, HTMLAttributes } from 'react'
+import { motion, MotionProps } from 'framer-motion'
 import Link from 'next/link'
+
+// Type-safe wrappers for motion components
+const MotionDiv = (props: HTMLAttributes<HTMLDivElement> & MotionProps) => <motion.div {...props} />
+const MotionButton = (props: ButtonHTMLAttributes<HTMLButtonElement> & MotionProps) => <motion.button {...props} />
 
 export default function QuizPage() {
   const { topic } = useParams()
@@ -52,7 +56,7 @@ export default function QuizPage() {
   if (!questions) return <p className="text-center mt-10">❌ Invalid topic.</p>
 
   if (completed) {
-    const tweet = `I scored ${score}/${questions.length} on the ${topic} quiz by Succinct! 🧠🚀`
+    const tweet = `I scored ${score}/${questions.length} on the ${topic} quiz by Succinct-proverhub! 🧠🚀`
     return (
       <div className="max-w-3xl mx-auto px-6 mt-10">
         <h1 className="text-3xl font-bold mb-4 text-center">✅ Quiz Complete</h1>
@@ -94,7 +98,7 @@ export default function QuizPage() {
         <p>✅ {score}</p>
       </div>
 
-      <motion.div
+      <MotionDiv
         key={index}
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,7 +109,7 @@ export default function QuizPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {q.options.map((opt, i) => (
-            <motion.button
+            <MotionButton
               key={i}
               onClick={() => handleNext(opt)}
               whileHover={{ scale: 1.03 }}
@@ -113,10 +117,10 @@ export default function QuizPage() {
               className="bg-white border border-pink-200 hover:border-pink-400 text-pink-900 font-medium px-4 py-3 rounded-lg shadow transition"
             >
               {opt}
-            </motion.button>
+            </MotionButton>
           ))}
         </div>
-      </motion.div>
+      </MotionDiv>
     </div>
   )
 }

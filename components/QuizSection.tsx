@@ -17,6 +17,8 @@ const topics = [
   { id: 'vApps', title: 'vApps', description: 'Verifiable apps built with ZK' },
 ]
 
+const MotionLink = motion(Link)
+
 export default function QuizSection() {
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -34,7 +36,7 @@ export default function QuizSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
           >
-            <Link
+            <MotionLink
               href={`/quiz/${id}`}
               onClick={() => setActiveId(id)}
               whileTap={{ scale: 0.97 }}
@@ -46,7 +48,7 @@ export default function QuizSection() {
             >
               <h3 className="text-lg font-semibold mb-2 text-pink-700">{title}</h3>
               <p className="text-sm text-gray-600">{description}</p>
-            </Link>
+            </MotionLink>
           </motion.div>
         ))}
       </div>

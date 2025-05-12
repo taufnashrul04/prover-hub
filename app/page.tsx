@@ -1,8 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { motion, MotionProps } from 'framer-motion'
+import { useState, HTMLAttributes } from 'react'
+
+// Fix: extend div props + MotionProps
+type MotionDivProps = HTMLAttributes<HTMLDivElement> & MotionProps
+const MotionDiv = (props: MotionDivProps) => <motion.div {...props} />
 
 export default function HomePage() {
   const cards = [
@@ -35,28 +39,31 @@ export default function HomePage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   return (
-    <main className="flex flex-col items-center justify-center gap-8 p- w-full max-w-screen-xl mx-auto">
+    <main className="flex flex-col items-center justify-center gap-8 w-full max-w-screen-xl mx-auto">
       <h1 className="text-center font-bold tracking-wide leading-tight">
-        <span className="text-5xl tracking-widesttext-5xl sm:text-6xl text-black uppercase block font-bebas">SUCCINCT</span><br />
-        <span className="text-6xl sm:text-7xl text-black px-3 py-1 inline-block rounded-md mt-2 font-bebas">Prover Hub</span>
+        <span className="text-5xl sm:text-6xl text-black uppercase block font-bebas">
+          SUCCINCT
+        </span>
+        <br />
+        <span className="text-6xl sm:text-7xl text-black px-3 py-1 inline-block rounded-md mt-2 font-bebas">
+          Prover Hub
+        </span>
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {cards.map(({ title, desc, href, icon }, i) => (
-          <Link key={i} href={href}>
-            <button className="bg-transparent border-none outline-none">
-              <motion.div
+          <Link key={i} href={href} className="no-underline">
+            <MotionDiv
               whileTap={{ scale: 0.97 }}
               whileHover={{ scale: 1.03 }}
               animate={{ boxShadow: '0 0 12px rgba(59,130,246,0.5)' }}
               transition={{ duration: 0.3 }}
-  className="bg-white/80 backdrop-blur-md rounded-xl shadow-md p-6 w-72 text-center"
+              className="bg-white/80 backdrop-blur-md rounded-xl shadow-md p-6 w-72 text-center cursor-pointer"
             >
-                <img src={icon} alt={title} className="w-10 h-10 mx-auto mb-2" />
-                <h3 className="text-xl font-semibold text-teal-600">{title}</h3>
-                <p className="text-sm mt-1">{desc}</p>
-              </motion.div>
-            </button>
+              <img src={icon} alt={title} className="w-10 h-10 mx-auto mb-2" />
+              <h3 className="text-xl font-semibold text-teal-600">{title}</h3>
+              <p className="text-sm mt-1">{desc}</p>
+            </MotionDiv>
           </Link>
         ))}
       </div>
