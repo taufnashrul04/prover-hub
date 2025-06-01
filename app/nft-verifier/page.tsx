@@ -2,6 +2,7 @@
 
 import { useState, HTMLAttributes } from 'react'
 import { motion, MotionProps } from 'framer-motion'
+import Link from 'next/link'
 
 type MotionDivProps = HTMLAttributes<HTMLDivElement> & MotionProps
 const MotionDiv = (props: MotionDivProps) => <motion.div {...props} />
@@ -15,7 +16,7 @@ const modes = [
 
 const nftTypes = [
   { value: 'steady', label: 'Steady Teddy NFT' },
-  { value: 'other', label: 'NFT Lain' },
+  { value: 'other', label: 'Another NFT' },
 ]
 
 export default function NftVerifierPage() {
@@ -80,7 +81,7 @@ export default function NftVerifierPage() {
           NFT Succinct Verifier
         </h1>
         <p className="text-gray-600 text-center mb-6 max-w-lg">
-          Verifikasi kepemilikan NFT Steady Teddy <b>atau</b> NFT lain di chain apa saja. Pilih jenis NFT, lalu isi data yang diperlukan.
+          Verify your ownership of Steady Teddy <b>or</b> another NFT in another chain. choose nft type and fill the form.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -88,7 +89,7 @@ export default function NftVerifierPage() {
         >
           <div>
             <label htmlFor="nft_type" className="block text-sm font-medium text-sky-800 mb-1">
-              Jenis NFT
+              NFT type
             </label>
             <select
               id="nft_type"
@@ -214,6 +215,13 @@ export default function NftVerifierPage() {
           </MotionDiv>
         )}
       </section>
+
+      <Link
+        href="/"
+        className="mt-12 text-sm text-blue-600 underline text-center block hover:text-blue-800 transition"
+      >
+        ← Back to Home
+      </Link>
     </main>
   )
 }
