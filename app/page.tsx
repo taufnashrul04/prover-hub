@@ -34,6 +34,12 @@ export default function HomePage() {
       href: '/meme',
       icon: '/assets/meme.svg',
     },
+    {
+    title: 'NFT Succinct Verifier',
+    desc: 'Verifikasi, prove, dan cek NFT dengan mudah.',
+    href: '/nft-verifier',
+    icon: '/assets/nft.svg', // siapkan icon ini di /public/assets/
+    },
   ]
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
