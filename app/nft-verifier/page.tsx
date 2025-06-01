@@ -3,7 +3,6 @@
 import { useState, HTMLAttributes } from 'react'
 import { motion, MotionProps } from 'framer-motion'
 
-// Komponen MotionDiv dengan props yang kompatibel (pattern yang kamu pakai)
 type MotionDivProps = HTMLAttributes<HTMLDivElement> & MotionProps
 const MotionDiv = (props: MotionDivProps) => <motion.div {...props} />
 
@@ -14,12 +13,19 @@ const modes = [
   { value: 'prove', label: 'Prove' },
 ]
 
+const nftTypes = [
+  { value: 'steady', label: 'Steady Teddy NFT' },
+  { value: 'other', label: 'NFT Lain' },
+]
+
 export default function NftVerifierPage() {
   const [form, setForm] = useState({
     ca: '',
     token_id: '',
     wallet: '',
     mode: 'execute',
+    nft_type: 'steady',
+    rpc_url: '', // only used for NFT lain
   })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<string | null>(null)
@@ -31,10 +37,20 @@ export default function NftVerifierPage() {
     setResult(null)
     setError(null)
     try {
+      // Siapkan data POST: jika steady, exclude rpc_url
+      const submitData: any = {
+        ca: form.ca,
+        token_id: form.token_id,
+        wallet: form.wallet,
+        mode: form.mode,
+      }
+      if (form.nft_type === 'other') {
+        submitData.rpc_url = form.rpc_url
+      }
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(submitData),
       })
       const text = await res.text()
       if (!res.ok) {
@@ -48,6 +64,15 @@ export default function NftVerifierPage() {
     setLoading(false)
   }
 
+  // Reset rpc_url bila kembali ke steady
+  function handleNftTypeChange(val: string) {
+    setForm(f => ({
+      ...f,
+      nft_type: val,
+      rpc_url: val === 'steady' ? '' : f.rpc_url,
+    }))
+  }
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen w-full max-w-screen-md mx-auto px-4">
       <section className="w-full flex flex-col items-center gap-4">
@@ -55,12 +80,28 @@ export default function NftVerifierPage() {
           NFT Succinct Verifier
         </h1>
         <p className="text-gray-600 text-center mb-6 max-w-lg">
-          Verify NFT ownership or generate proof easily. Input your contract address, token ID, wallet address, and choose a mode.
+          Verifikasi kepemilikan NFT Steady Teddy <b>atau</b> NFT lain di chain apa saja. Pilih jenis NFT, lalu isi data yang diperlukan.
         </p>
         <form
           onSubmit={handleSubmit}
           className="bg-white/90 rounded-2xl shadow-lg p-8 w-full max-w-md flex flex-col gap-4"
         >
+          <div>
+            <label htmlFor="nft_type" className="block text-sm font-medium text-sky-800 mb-1">
+              Jenis NFT
+            </label>
+            <select
+              id="nft_type"
+              name="nft_type"
+              value={form.nft_type}
+              onChange={e => handleNftTypeChange(e.target.value)}
+              className="input w-full border rounded-md p-2 bg-gray-50"
+            >
+              {nftTypes.map(t => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <label htmlFor="ca" className="block text-sm font-medium text-sky-800 mb-1">
               Contract Address (CA)
@@ -122,6 +163,23 @@ export default function NftVerifierPage() {
               ))}
             </select>
           </div>
+          {form.nft_type === 'other' && (
+            <div>
+              <label htmlFor="rpc_url" className="block text-sm font-medium text-sky-800 mb-1">
+                RPC URL (wajib diisi untuk NFT lain)
+              </label>
+              <input
+                type="text"
+                id="rpc_url"
+                name="rpc_url"
+                required
+                value={form.rpc_url}
+                onChange={e => setForm(f => ({ ...f, rpc_url: e.target.value }))}
+                className="input w-full border rounded-md p-2 bg-gray-50"
+                placeholder="https://rpc.<chain>.com"
+              />
+            </div>
+          )}
           {/* Gunakan MotionDiv sebagai pengganti motion.button */}
           <MotionDiv
             whileTap={{ scale: 0.97 }}
