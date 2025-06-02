@@ -1,7 +1,6 @@
-'use client'
-
 import { useState, HTMLAttributes } from 'react'
 import { motion, MotionProps } from 'framer-motion'
+import { JsonRpcProvider, Contract } from 'ethers'
 import Link from 'next/link'
 
 type MotionDivProps = HTMLAttributes<HTMLDivElement> & MotionProps
@@ -16,7 +15,7 @@ const modes = [
 
 const nftTypes = [
   { value: 'steady', label: 'Steady Teddy NFT' },
-  { value: 'other', label: 'Another NFT' },
+  { value: 'other', label: 'NFT Lain' },
 ]
 
 export default function NftVerifierPage() {
@@ -26,17 +25,45 @@ export default function NftVerifierPage() {
     wallet: '',
     mode: 'execute',
     nft_type: 'steady',
-    rpc_url: '', // only used for NFT lain
+    rpc_url: '',
   })
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [nftImage, setNftImage] = useState<string | null>(null)
+
+  async function fetchNftImage(ca: string, tokenId: string, rpcUrl: string) {
+    try {
+      // ethers v6 setup
+      const provider = new JsonRpcProvider(rpcUrl)
+      // Minimal ABI for ERC721 tokenURI
+      const abi = [
+        "function tokenURI(uint256 tokenId) view returns (string)"
+      ]
+      const contract = new Contract(ca, abi, provider)
+      let uri = await contract.tokenURI(tokenId)
+      // IPFS to HTTP
+      if (uri.startsWith("ipfs://")) {
+        uri = uri.replace("ipfs://", "https://ipfs.io/ipfs/")
+      }
+      const metaRes = await fetch(uri)
+      const meta = await metaRes.json()
+      let imgUrl = meta.image || meta.image_url || ""
+      if (imgUrl.startsWith("ipfs://")) {
+        imgUrl = imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")
+      }
+      setNftImage(imgUrl)
+    } catch (e) {
+      setNftImage(null)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setResult(null)
     setError(null)
+    setNftImage(null)
     try {
       // Siapkan data POST: jika steady, exclude rpc_url
       const submitData: any = {
@@ -58,6 +85,12 @@ export default function NftVerifierPage() {
         setError(text)
       } else {
         setResult(text)
+        // Fetch NFT image jika verifikasi/proof sukses
+        // Gunakan default RPC untuk steady, custom untuk other
+        const rpcUrl = form.nft_type === 'steady'
+          ? "https://rpc.berachain.com"
+          : form.rpc_url
+        await fetchNftImage(form.ca, form.token_id, rpcUrl)
       }
     } catch (err) {
       setError('Failed to connect to backend.')
@@ -65,7 +98,6 @@ export default function NftVerifierPage() {
     setLoading(false)
   }
 
-  // Reset rpc_url bila kembali ke steady
   function handleNftTypeChange(val: string) {
     setForm(f => ({
       ...f,
@@ -81,7 +113,7 @@ export default function NftVerifierPage() {
           NFT Succinct Verifier
         </h1>
         <p className="text-gray-600 text-center mb-6 max-w-lg">
-          Verify your ownership of Steady Teddy <b>or</b> another NFT in another chain. choose nft type and fill the form.
+          Verifikasi kepemilikan NFT Steady Teddy <b>atau</b> NFT lain di chain apa saja. Pilih jenis NFT, lalu isi data yang diperlukan.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -89,7 +121,7 @@ export default function NftVerifierPage() {
         >
           <div>
             <label htmlFor="nft_type" className="block text-sm font-medium text-sky-800 mb-1">
-              NFT type
+              Jenis NFT
             </label>
             <select
               id="nft_type"
@@ -181,13 +213,11 @@ export default function NftVerifierPage() {
               />
             </div>
           )}
-          {/* Gunakan MotionDiv sebagai pengganti motion.button */}
           <MotionDiv
             whileTap={{ scale: 0.97 }}
             whileHover={{ scale: 1.03 }}
             transition={{ duration: 0.2 }}
             className={`mt-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg py-2 px-4 transition disabled:opacity-50 text-center select-none cursor-pointer ${loading ? 'opacity-60 pointer-events-none' : ''}`}
-            // Simulasi tombol: gunakan div, tapi submit form di onClick
             onClick={!loading ? handleSubmit : undefined}
             tabIndex={0}
             role="button"
@@ -200,9 +230,20 @@ export default function NftVerifierPage() {
           <MotionDiv
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 bg-gray-100 border border-sky-100 rounded-lg p-4 w-full max-w-md text-sm overflow-x-auto text-gray-700"
+            className="mt-6 bg-gray-100 border border-sky-100 rounded-lg p-4 w-full max-w-md text-sm overflow-x-auto text-gray-700 flex flex-col items-center"
           >
-            <pre className="whitespace-pre-wrap">{result}</pre>
+            <pre className="whitespace-pre-wrap text-center mb-2">{
+              result.includes("Berhasil membuat proof") || result.includes("Proof berhasil diverifikasi")
+                ? "Congrats, you successfully created proof of ownership with SP1!"
+                : result
+            }</pre>
+            {nftImage && (
+              <img
+                src={nftImage}
+                alt="NFT Image"
+                className="max-h-60 mt-2 rounded-lg shadow"
+              />
+            )}
           </MotionDiv>
         )}
         {error && (
@@ -215,7 +256,6 @@ export default function NftVerifierPage() {
           </MotionDiv>
         )}
       </section>
-
       <Link
         href="/"
         className="mt-12 text-sm text-blue-600 underline text-center block hover:text-blue-800 transition"
