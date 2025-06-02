@@ -1,106 +1,115 @@
-import { useState, HTMLAttributes } from 'react'
-import { motion, MotionProps } from 'framer-motion'
-import { JsonRpcProvider, Contract } from 'ethers'
-import Link from 'next/link'
+"use client";
+import { useState, HTMLAttributes } from "react";
+import { motion, MotionProps } from "framer-motion";
+import Link from "next/link";
 
-type MotionDivProps = HTMLAttributes<HTMLDivElement> & MotionProps
-const MotionDiv = (props: MotionDivProps) => <motion.div {...props} />
+type MotionDivProps = HTMLAttributes<HTMLDivElement> & MotionProps;
+const MotionDiv = (props: MotionDivProps) => <motion.div {...props} />;
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/verify'
+const API_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001/verify";
 
 const modes = [
-  { value: 'execute', label: 'Execute' },
-  { value: 'prove', label: 'Prove' },
-]
+  { value: "execute", label: "Execute" },
+  { value: "prove", label: "Prove" },
+];
 
 const nftTypes = [
-  { value: 'steady', label: 'Steady Teddy NFT' },
-  { value: 'other', label: 'another nft' },
-]
+  { value: "steady", label: "Steady Teddy NFT" },
+  { value: "other", label: "Another NFT" },
+];
 
 export default function NftVerifierPage() {
   const [form, setForm] = useState({
-    ca: '',
-    token_id: '',
-    wallet: '',
-    mode: 'execute',
-    nft_type: 'steady',
-    rpc_url: '',
-  })
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [nftImage, setNftImage] = useState<string | null>(null)
+    ca: "",
+    token_id: "",
+    wallet: "",
+    mode: "execute",
+    nft_type: "steady",
+    rpc_url: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [nftImage, setNftImage] = useState<string | null>(null);
 
-  async function fetchNftImage(ca: string, tokenId: string, rpcUrl: string) {
+  async function fetchNftImage(
+    ca: string,
+    tokenId: string,
+    rpcUrl: string
+  ): Promise<void> {
     try {
-      console.log("fetchNftImage called with", { ca, tokenId, rpcUrl })
-      const provider = new JsonRpcProvider(rpcUrl)
+      // Dynamic import for ESM-only ethers
+      const { JsonRpcProvider, Contract } = await import("ethers");
+      console.log("fetchNftImage called with", { ca, tokenId, rpcUrl });
+      const provider = new JsonRpcProvider(rpcUrl);
       const abi = [
-        "function tokenURI(uint256 tokenId) view returns (string)"
-      ]
-      const contract = new Contract(ca, abi, provider)
-      let uri = await contract.tokenURI(tokenId)
-      console.log("tokenURI:", uri)
-      if (uri.startsWith("ipfs://")) uri = uri.replace("ipfs://", "https://ipfs.io/ipfs/")
-      const metaRes = await fetch(uri)
-      const meta = await metaRes.json()
-      console.log("metadata:", meta)
-      let imgUrl = meta.image || meta.image_url || ""
-      if (imgUrl.startsWith("ipfs://")) imgUrl = imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/")
-      console.log("imageUrl:", imgUrl)
-      setNftImage(imgUrl)
+        "function tokenURI(uint256 tokenId) view returns (string)",
+      ];
+      const contract = new Contract(ca, abi, provider);
+      let uri = await contract.tokenURI(tokenId);
+      console.log("tokenURI:", uri);
+      if (uri.startsWith("ipfs://"))
+        uri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+      const metaRes = await fetch(uri);
+      const meta = await metaRes.json();
+      console.log("metadata:", meta);
+      let imgUrl = meta.image || meta.image_url || "";
+      if (imgUrl.startsWith("ipfs://"))
+        imgUrl = imgUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
+      console.log("imageUrl:", imgUrl);
+      setNftImage(imgUrl);
     } catch (e) {
-      console.error("Gagal fetch NFT image", e)
-      setNftImage(null)
+      console.error("Failed to fetch NFT image", e);
+      setNftImage(null);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setResult(null)
-    setError(null)
-    setNftImage(null)
+    e.preventDefault();
+    setLoading(true);
+    setResult(null);
+    setError(null);
+    setNftImage(null);
     try {
-      // Siapkan data POST: jika steady, exclude rpc_url
       const submitData: any = {
         ca: form.ca,
         token_id: form.token_id,
         wallet: form.wallet,
         mode: form.mode,
-      }
-      if (form.nft_type === 'other') {
-        submitData.rpc_url = form.rpc_url
+      };
+      if (form.nft_type === "other") {
+        submitData.rpc_url = form.rpc_url;
       }
       const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(submitData),
-      })
-      const text = await res.text()
+      });
+      const text = await res.text();
       if (!res.ok) {
-        setError(text)
+        setError(text);
       } else {
-        setResult(text)
-        // Selalu fetch NFT image setelah backend sukses
-        const rpcUrl = form.nft_type === 'steady'
-          ? "https://rpc.berachain.com"
-          : form.rpc_url
-        await fetchNftImage(form.ca, form.token_id, rpcUrl)
+        setResult(text);
+        // Always fetch NFT image after backend success
+        const rpcUrl =
+          form.nft_type === "steady"
+            ? "https://rpc.berachain.com"
+            : form.rpc_url;
+        await fetchNftImage(form.ca, form.token_id, rpcUrl);
       }
     } catch (err) {
-      setError('Failed to connect to backend.')
+      setError("Failed to connect to backend.");
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   function handleNftTypeChange(val: string) {
-    setForm(f => ({
+    setForm((f) => ({
       ...f,
       nft_type: val,
-      rpc_url: val === 'steady' ? '' : f.rpc_url,
-    }))
+      rpc_url: val === "steady" ? "" : f.rpc_url,
+    }));
   }
 
   return (
@@ -110,7 +119,7 @@ export default function NftVerifierPage() {
           NFT Succinct Verifier
         </h1>
         <p className="text-gray-600 text-center mb-6 max-w-lg">
-          Verify your ownership of Steady Teddy <b>or</b> another NFT in another chain. choose nft type and fill the form.
+          Verify your ownership of Steady Teddy <b>or</b> another NFT on any chain. Choose the NFT type and fill the required data.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -118,17 +127,19 @@ export default function NftVerifierPage() {
         >
           <div>
             <label htmlFor="nft_type" className="block text-sm font-medium text-sky-800 mb-1">
-              Jenis NFT
+              NFT Type
             </label>
             <select
               id="nft_type"
               name="nft_type"
               value={form.nft_type}
-              onChange={e => handleNftTypeChange(e.target.value)}
+              onChange={(e) => handleNftTypeChange(e.target.value)}
               className="input w-full border rounded-md p-2 bg-gray-50"
             >
-              {nftTypes.map(t => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+              {nftTypes.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
               ))}
             </select>
           </div>
@@ -142,7 +153,9 @@ export default function NftVerifierPage() {
               name="ca"
               required
               value={form.ca}
-              onChange={e => setForm(f => ({ ...f, ca: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, ca: e.target.value }))
+              }
               className="input w-full border rounded-md p-2 bg-gray-50"
               placeholder="0x..."
             />
@@ -157,7 +170,9 @@ export default function NftVerifierPage() {
               name="token_id"
               required
               value={form.token_id}
-              onChange={e => setForm(f => ({ ...f, token_id: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, token_id: e.target.value }))
+              }
               className="input w-full border rounded-md p-2 bg-gray-50"
               placeholder="1234"
             />
@@ -172,7 +187,9 @@ export default function NftVerifierPage() {
               name="wallet"
               required
               value={form.wallet}
-              onChange={e => setForm(f => ({ ...f, wallet: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, wallet: e.target.value }))
+              }
               className="input w-full border rounded-md p-2 bg-gray-50"
               placeholder="0x..."
             />
@@ -185,18 +202,22 @@ export default function NftVerifierPage() {
               id="mode"
               name="mode"
               value={form.mode}
-              onChange={e => setForm(f => ({ ...f, mode: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, mode: e.target.value }))
+              }
               className="input w-full border rounded-md p-2 bg-gray-50"
             >
-              {modes.map(m => (
-                <option key={m.value} value={m.value}>{m.label}</option>
+              {modes.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
               ))}
             </select>
           </div>
-          {form.nft_type === 'other' && (
+          {form.nft_type === "other" && (
             <div>
               <label htmlFor="rpc_url" className="block text-sm font-medium text-sky-800 mb-1">
-                RPC URL (please fill for another nft)
+                RPC URL (required for Another NFT)
               </label>
               <input
                 type="text"
@@ -204,7 +225,9 @@ export default function NftVerifierPage() {
                 name="rpc_url"
                 required
                 value={form.rpc_url}
-                onChange={e => setForm(f => ({ ...f, rpc_url: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, rpc_url: e.target.value }))
+                }
                 className="input w-full border rounded-md p-2 bg-gray-50"
                 placeholder="https://rpc.<chain>.com"
               />
@@ -214,13 +237,15 @@ export default function NftVerifierPage() {
             whileTap={{ scale: 0.97 }}
             whileHover={{ scale: 1.03 }}
             transition={{ duration: 0.2 }}
-            className={`mt-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg py-2 px-4 transition disabled:opacity-50 text-center select-none cursor-pointer ${loading ? 'opacity-60 pointer-events-none' : ''}`}
+            className={`mt-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg py-2 px-4 transition disabled:opacity-50 text-center select-none cursor-pointer ${
+              loading ? "opacity-60 pointer-events-none" : ""
+            }`}
             onClick={!loading ? handleSubmit : undefined}
             tabIndex={0}
             role="button"
             aria-disabled={loading}
           >
-            {loading ? 'Processing...' : 'Verify'}
+            {loading ? "Processing..." : "Verify"}
           </MotionDiv>
         </form>
         {result && (
@@ -229,17 +254,18 @@ export default function NftVerifierPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mt-6 bg-gray-100 border border-sky-100 rounded-lg p-4 w-full max-w-md text-sm overflow-x-auto text-gray-700 flex flex-col items-center"
           >
-            <pre className="whitespace-pre-wrap text-center mb-2">{
-              result.includes("succes create proof") || result.includes("proof verivication succesfull")
+            <pre className="whitespace-pre-wrap text-center mb-2">
+              {result.includes("success create proof") ||
+              result.includes("proof verification successful")
                 ? "Congrats, you successfully created proof of ownership with SP1!"
-                : result
-            }</pre>
+                : result}
+            </pre>
             {nftImage && (
               <img
                 src={nftImage}
                 alt="NFT Image"
                 className="max-h-60 mt-2 rounded-lg shadow"
-                onError={e => (e.currentTarget.style.display = 'none')}
+                onError={(e) => (e.currentTarget.style.display = "none")}
               />
             )}
           </MotionDiv>
@@ -261,5 +287,5 @@ export default function NftVerifierPage() {
         ← Back to Home
       </Link>
     </main>
-  )
+  );
 }
