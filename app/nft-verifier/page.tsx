@@ -21,6 +21,15 @@ const nftTypes = [
 
 const STEADY_TEDDY_CA = "0x88888888a9361f15aadbaca355a6b2938c6a674e";
 
+interface VerifyResponse {
+  success: boolean;
+  message: string;
+  request_hash?: string;
+  proof_data?: any;
+  stdout?: string;
+  stderr?: string;
+}
+
 export default function NftVerifierPage() {
   const [form, setForm] = useState({
     ca: "",
@@ -31,7 +40,7 @@ export default function NftVerifierPage() {
     rpc_url: "",
   });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<VerifyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nftImage, setNftImage] = useState<string | null>(null);
 
@@ -61,12 +70,27 @@ export default function NftVerifierPage() {
     }
   }
 
+  function downloadProofFile(proofData: any, requestHash: string) {
+    const blob = new Blob([JSON.stringify(proofData, null, 2)], {
+      type: 'application/json'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `proof_${requestHash.replace('0x', '')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setResult(null);
     setError(null);
     setNftImage(null);
+    
     try {
       // Untuk steady, CA tidak dikirim ke backend (backend akan pakai default)
       const submitData: any = {
@@ -74,31 +98,36 @@ export default function NftVerifierPage() {
         token_id: form.token_id,
         mode: form.mode,
       };
+      
       if (form.nft_type === "other") {
         submitData.ca = form.ca;
         submitData.rpc_url = form.rpc_url;
       }
+      
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(submitData),
       });
-      const text = await res.text();
-      if (!res.ok) {
-        setError(text);
+      
+      const responseData: VerifyResponse = await res.json();
+      
+      if (!res.ok || !responseData.success) {
+        setError(responseData.message || responseData.stderr || "Verification failed");
       } else {
-        setResult(text);
-        const ca =
-          form.nft_type === "steady" ? STEADY_TEDDY_CA : form.ca;
-        const rpcUrl =
-          form.nft_type === "steady"
-            ? "https://rpc.berachain.com"
-            : form.rpc_url;
+        setResult(responseData);
+        
+        // Fetch NFT image on success
+        const ca = form.nft_type === "steady" ? STEADY_TEDDY_CA : form.ca;
+        const rpcUrl = form.nft_type === "steady" 
+          ? "https://rpc.berachain.com" 
+          : form.rpc_url;
         await fetchNftImage(ca, form.token_id, rpcUrl);
       }
     } catch (err) {
       setError("Failed to connect to backend.");
     }
+    
     setLoading(false);
   }
 
@@ -249,32 +278,64 @@ export default function NftVerifierPage() {
             {loading ? "Processing..." : "Verify"}
           </MotionDiv>
         </form>
-        {result && (
+        
+        {result && result.success && (
           <MotionDiv
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 bg-gray-100 border border-sky-100 rounded-lg p-4 w-full max-w-md text-sm overflow-x-auto text-gray-700 flex flex-col items-center"
+            className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 w-full max-w-md text-sm flex flex-col items-center"
           >
-            <pre className="whitespace-pre-wrap text-center mb-2">
-              {result}
-            </pre>
+            <h3 className="text-green-800 font-semibold mb-2">Verification Successful!</h3>
+            <p className="text-green-700 text-center mb-3">{result.message}</p>
+            
+            {result.request_hash && (
+              <div className="mb-3 w-full">
+                <p className="text-green-800 font-medium mb-1">Request Hash:</p>
+                <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded">
+                  {result.request_hash}
+                </p>
+              </div>
+            )}
+            
+            {result.proof_data && (
+              <div className="mb-3 w-full">
+                <button
+                  onClick={() => downloadProofFile(result.proof_data, result.request_hash || 'proof')}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Download Proof JSON
+                </button>
+              </div>
+            )}
+            
+            {result.stdout && (
+              <details className="w-full mt-2">
+                <summary className="text-green-800 font-medium cursor-pointer">Technical Details</summary>
+                <pre className="text-green-600 text-xs mt-2 p-2 bg-green-100 rounded overflow-x-auto whitespace-pre-wrap">
+                  {result.stdout}
+                </pre>
+              </details>
+            )}
+            
             {nftImage && (
               <img
                 src={nftImage}
                 alt="NFT Image"
-                className="max-h-60 mt-2 rounded-lg shadow"
+                className="max-h-60 mt-4 rounded-lg shadow"
                 onError={(e) => (e.currentTarget.style.display = "none")}
               />
             )}
           </MotionDiv>
         )}
+        
         {error && (
           <MotionDiv
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mt-6 text-red-700 bg-red-50 border border-red-200 rounded-lg p-4 w-full max-w-md"
           >
-            {error}
+            <h3 className="font-semibold mb-1">Verification Failed</h3>
+            <p>{error}</p>
           </MotionDiv>
         )}
       </section>
