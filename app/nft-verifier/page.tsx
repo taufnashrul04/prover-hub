@@ -33,6 +33,7 @@ interface VerifyResponse {
   proof_data?: any;
   stdout?: string;
   stderr?: string;
+  transaction_hash?: string; // for fallback
 }
 
 export default function NftVerifierPage() {
@@ -149,6 +150,14 @@ export default function NftVerifierPage() {
   function getTxExplorerUrl(txHash: string | undefined) {
     if (!txHash) return null;
     return `https://explorer.succinct.xyz/tx/${txHash}`;
+  }
+
+  // Helper to get tx hash from all possible places in response
+  function getTransactionHash(): string | undefined {
+    if (result?.hashes?.transaction_hash) return result.hashes.transaction_hash;
+    if (result?.transaction_hash) return result.transaction_hash;
+    if (result?.proof_data?.transaction_hash) return result.proof_data.transaction_hash;
+    return undefined;
   }
 
   return (
@@ -299,37 +308,6 @@ export default function NftVerifierPage() {
             <h3 className="text-green-800 font-semibold mb-2">Verification Successful!</h3>
             <p className="text-green-700 text-center mb-3">{result.message}</p>
 
-            {/* Lengkap: Tampilkan request_hash dan transaction_hash */}
-            {result.hashes && (
-              <div className="mb-3 w-full">
-                {result.hashes.request_hash && (
-                  <>
-                    <p className="text-green-800 font-medium mb-1">Request Hash:</p>
-                    <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded">
-                      {result.hashes.request_hash}
-                    </p>
-                  </>
-                )}
-                {result.hashes.transaction_hash && (
-                  <>
-                    <p className="text-green-800 font-medium mb-1 mt-2">Transaction Hash:</p>
-                    <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded flex items-center gap-2">
-                      {result.hashes.transaction_hash}
-                      {/* Direct link to succinct explorer */}
-                      <a
-                        href={getTxExplorerUrl(result.hashes.transaction_hash)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-2 text-blue-600 underline text-xs font-medium hover:text-blue-800"
-                      >
-                        View on Explorer
-                      </a>
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
-
             {result.proof_data && (
               <div className="mb-3 w-full">
                 <button
@@ -338,6 +316,24 @@ export default function NftVerifierPage() {
                 >
                   Download Proof JSON
                 </button>
+              </div>
+            )}
+
+            {/* Transaction Hash + Explorer Link */}
+            {getTransactionHash() && (
+              <div className="mb-3 w-full flex flex-col items-center">
+                <p className="text-green-800 font-medium mb-1">Transaction Hash:</p>
+                <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded flex items-center gap-2">
+                  {getTransactionHash()}
+                  <a
+                    href={getTxExplorerUrl(getTransactionHash())!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-blue-600 underline text-xs font-medium hover:text-blue-800"
+                  >
+                    View on Explorer
+                  </a>
+                </p>
               </div>
             )}
 
