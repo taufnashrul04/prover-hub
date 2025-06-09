@@ -21,10 +21,15 @@ const nftTypes = [
 
 const STEADY_TEDDY_CA = "0x88888888a9361f15aadbaca355a6b2938c6a674e";
 
+interface Hashes {
+  request_hash?: string;
+  transaction_hash?: string;
+}
+
 interface VerifyResponse {
   success: boolean;
   message: string;
-  request_hash?: string;
+  hashes?: Hashes;
   proof_data?: any;
   stdout?: string;
   stderr?: string;
@@ -288,19 +293,31 @@ export default function NftVerifierPage() {
             <h3 className="text-green-800 font-semibold mb-2">Verification Successful!</h3>
             <p className="text-green-700 text-center mb-3">{result.message}</p>
             
-            {result.request_hash && (
+            {result.hashes && (
               <div className="mb-3 w-full">
-                <p className="text-green-800 font-medium mb-1">Request Hash:</p>
-                <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded">
-                  {result.request_hash}
-                </p>
+                {result.hashes.request_hash && (
+                  <>
+                    <p className="text-green-800 font-medium mb-1">Request Hash:</p>
+                    <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded">
+                      {result.hashes.request_hash}
+                    </p>
+                  </>
+                )}
+                {result.hashes.transaction_hash && (
+                  <>
+                    <p className="text-green-800 font-medium mb-1 mt-2">Transaction Hash:</p>
+                    <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded">
+                      {result.hashes.transaction_hash}
+                    </p>
+                  </>
+                )}
               </div>
             )}
             
             {result.proof_data && (
               <div className="mb-3 w-full">
                 <button
-                  onClick={() => downloadProofFile(result.proof_data, result.request_hash || 'proof')}
+                  onClick={() => downloadProofFile(result.proof_data, result.hashes?.request_hash || 'proof')}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition"
                 >
                   Download Proof JSON
