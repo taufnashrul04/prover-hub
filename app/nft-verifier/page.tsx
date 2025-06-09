@@ -293,6 +293,7 @@ export default function NftVerifierPage() {
             <h3 className="text-green-800 font-semibold mb-2">Verification Successful!</h3>
             <p className="text-green-700 text-center mb-3">{result.message}</p>
             
+            {/* Lengkap: Tampilkan request_hash dan transaction_hash */}
             {result.hashes && (
               <div className="mb-3 w-full">
                 {result.hashes.request_hash && (
