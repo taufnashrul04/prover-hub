@@ -95,7 +95,7 @@ export default function NftVerifierPage() {
     setResult(null);
     setError(null);
     setNftImage(null);
-    
+
     try {
       // Untuk steady, CA tidak dikirim ke backend (backend akan pakai default)
       const submitData: any = {
@@ -103,36 +103,36 @@ export default function NftVerifierPage() {
         token_id: form.token_id,
         mode: form.mode,
       };
-      
+
       if (form.nft_type === "other") {
         submitData.ca = form.ca;
         submitData.rpc_url = form.rpc_url;
       }
-      
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(submitData),
       });
-      
+
       const responseData: VerifyResponse = await res.json();
-      
+
       if (!res.ok || !responseData.success) {
         setError(responseData.message || responseData.stderr || "Verification failed");
       } else {
         setResult(responseData);
-        
+
         // Fetch NFT image on success
         const ca = form.nft_type === "steady" ? STEADY_TEDDY_CA : form.ca;
-        const rpcUrl = form.nft_type === "steady" 
-          ? "https://rpc.berachain.com" 
+        const rpcUrl = form.nft_type === "steady"
+          ? "https://rpc.berachain.com"
           : form.rpc_url;
         await fetchNftImage(ca, form.token_id, rpcUrl);
       }
     } catch (err) {
       setError("Failed to connect to backend.");
     }
-    
+
     setLoading(false);
   }
 
@@ -143,6 +143,12 @@ export default function NftVerifierPage() {
       ca: val === "steady" ? "" : f.ca,
       rpc_url: val === "steady" ? "" : f.rpc_url,
     }));
+  }
+
+  // Always use succinct explorer for tx hash
+  function getTxExplorerUrl(txHash: string | undefined) {
+    if (!txHash) return null;
+    return `https://explorer.succinct.xyz/tx/${txHash}`;
   }
 
   return (
@@ -283,7 +289,7 @@ export default function NftVerifierPage() {
             {loading ? "Processing..." : "Verify"}
           </MotionDiv>
         </form>
-        
+
         {result && result.success && (
           <MotionDiv
             initial={{ opacity: 0, y: 10 }}
@@ -292,7 +298,7 @@ export default function NftVerifierPage() {
           >
             <h3 className="text-green-800 font-semibold mb-2">Verification Successful!</h3>
             <p className="text-green-700 text-center mb-3">{result.message}</p>
-            
+
             {/* Lengkap: Tampilkan request_hash dan transaction_hash */}
             {result.hashes && (
               <div className="mb-3 w-full">
@@ -307,14 +313,23 @@ export default function NftVerifierPage() {
                 {result.hashes.transaction_hash && (
                   <>
                     <p className="text-green-800 font-medium mb-1 mt-2">Transaction Hash:</p>
-                    <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded">
+                    <p className="text-green-600 font-mono text-xs break-all bg-green-100 p-2 rounded flex items-center gap-2">
                       {result.hashes.transaction_hash}
+                      {/* Direct link to succinct explorer */}
+                      <a
+                        href={getTxExplorerUrl(result.hashes.transaction_hash)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 text-blue-600 underline text-xs font-medium hover:text-blue-800"
+                      >
+                        View on Explorer
+                      </a>
                     </p>
                   </>
                 )}
               </div>
             )}
-            
+
             {result.proof_data && (
               <div className="mb-3 w-full">
                 <button
@@ -325,7 +340,7 @@ export default function NftVerifierPage() {
                 </button>
               </div>
             )}
-            
+
             {result.stdout && (
               <details className="w-full mt-2">
                 <summary className="text-green-800 font-medium cursor-pointer">Technical Details</summary>
@@ -334,7 +349,7 @@ export default function NftVerifierPage() {
                 </pre>
               </details>
             )}
-            
+
             {nftImage && (
               <img
                 src={nftImage}
@@ -345,7 +360,7 @@ export default function NftVerifierPage() {
             )}
           </MotionDiv>
         )}
-        
+
         {error && (
           <MotionDiv
             initial={{ opacity: 0, y: 10 }}
